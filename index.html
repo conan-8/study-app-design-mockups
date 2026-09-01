@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ten Design Languages for a Study App</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=VT323&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;0,9..144,900;1,9..144,400;1,9..144,600&family=Archivo:wght@400;500;600;700;800&family=Archivo+Black&family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Sora:wght@300;400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
+<style>
+/* ============ GLOBAL ============ */
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:#0e0e12;color:#fff;font-family:'Sora',sans-serif;-webkit-font-smoothing:antialiased}
+::selection{background:#fff;color:#000}
+
+/* side index */
+.index{position:fixed;left:26px;top:50%;transform:translateY(-50%);z-index:60;display:flex;flex-direction:column;gap:2px;mix-blend-mode:difference}
+.index a{display:flex;align-items:center;gap:10px;text-decoration:none;color:#fff;padding:5px 0;opacity:.35;transition:opacity .3s}
+.index a .ix{font-family:'Space Mono',monospace;font-size:10px;width:22px;letter-spacing:.08em}
+.index a .nm{font-family:'Space Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.14em;max-width:0;overflow:hidden;white-space:nowrap;transition:max-width .4s cubic-bezier(.16,1,.3,1)}
+.index a:hover{opacity:.8}
+.index a:hover .nm,.index a.active .nm{max-width:120px}
+.index a.active{opacity:1}
+.index a.active .ix{border-bottom:1px solid currentColor}
+@media(max-width:900px){.index{display:none}}
+
+/* section scaffold */
+.lang{min-height:100vh;position:relative;display:flex;align-items:center;overflow:hidden}
+.wrap{width:min(1180px,88vw);margin:0 auto;padding:11vh 0;display:grid;grid-template-columns:1fr 1fr;gap:6vw;align-items:center}
+@media(max-width:900px){.wrap{grid-template-columns:1fr;gap:48px;padding:14vh 0}}
+.lang-head .num{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.3em;opacity:.55;display:block;margin-bottom:18px}
+.lang-head h2{font-size:clamp(44px,5.4vw,76px);line-height:.95;letter-spacing:-.02em;margin-bottom:16px}
+.lang-head .tag{font-size:16px;line-height:1.55;opacity:.75;max-width:42ch;margin-bottom:26px}
+.spec{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:34px}
+.spec li{list-style:none;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;padding:7px 12px;border:1px solid currentColor;border-radius:99px;opacity:.8}
+.notes{list-style:none;display:flex;flex-direction:column;gap:10px}
+.notes li{font-size:13.5px;line-height:1.5;opacity:.65;padding-left:18px;position:relative}
+.notes li::before{content:"";position:absolute;left:0;top:.62em;width:7px;height:1px;background:currentColor}
+.swatches{display:flex;gap:6px;margin-bottom:26px}
+.swatches i{width:26px;height:26px;border-radius:50%;border:1px solid rgba(128,128,128,.35);display:block}
+
+/* reveal */
+.lang .wrap>*{opacity:0;transform:translateY(26px);transition:opacity .9s cubic-bezier(.16,1,.3,1),transform .9s cubic-bezier(.16,1,.3,1)}
+.lang .wrap>*:nth-child(2){transition-delay:.12s}
+.lang.in .wrap>*{opacity:1;transform:none}
+
+/* generic mini-app scaffold (each theme restyles) */
+.app{width:min(430px,100%);margin:0 auto;font-size:15px}
+.app-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.brand{font-weight:700}
+.streak{display:inline-flex;align-items:center;gap:6px;font-size:12px}
+.flash{position:relative;perspective:1200px;cursor:pointer;margin-bottom:16px}
+.flash-inner{position:relative;transform-style:preserve-3d;transition:transform .7s cubic-bezier(.3,1.2,.3,1)}
+.flash.flipped .flash-inner{transform:rotateX(180deg)}
+.face{backface-visibility:hidden}
+.face.back{position:absolute;inset:0;transform:rotateX(180deg);display:flex;align-items:center;justify-content:center}
+.q-label{display:block;font-size:10px;letter-spacing:.22em;text-transform:uppercase;opacity:.55;margin-bottom:12px}
+.q-text{font-size:19px;line-height:1.4}
+.flip-hint{display:block;margin-top:14px;font-size:10px;letter-spacing:.16em;text-transform:uppercase;opacity:.45}
+.prog{margin-bottom:16px}
+.prog-label{display:flex;justify-content:space-between;font-size:11px;letter-spacing:.1em;text-transform:uppercase;opacity:.6;margin-bottom:8px}
+.bar{height:8px;border-radius:99px;background:rgba(128,128,128,.25);overflow:hidden}
+.bar i{display:block;height:100%;width:35%;border-radius:inherit;transition:width 1.2s cubic-bezier(.16,1,.3,1)}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.chip{font-size:12px;padding:7px 14px;border-radius:99px}
+.cta{display:block;width:100%;text-align:center;font-size:15px;font-weight:700;padding:16px;border:none;cursor:pointer;font-family:inherit}
+</style>
+<style>
+/* ============ HERO / OUTRO ============ */
+.hero{min-height:100vh;background:#0e0e12;display:flex;flex-direction:column;justify-content:center;position:relative;overflow:hidden}
+.hero-inner{width:min(1180px,88vw);margin:0 auto;padding:14vh 0}
+.hero .kicker{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.34em;text-transform:uppercase;color:#8a8a94;margin-bottom:26px}
+.hero h1{font-family:'Fraunces',serif;font-weight:300;font-size:clamp(48px,7vw,108px);line-height:.98;letter-spacing:-.02em;max-width:12ch}
+.hero h1 em{font-style:italic;font-weight:400}
+.hero .sub{margin-top:30px;max-width:52ch;font-size:16px;line-height:1.65;color:#9a9aa4}
+.hero-grid{margin-top:9vh;display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.14)}
+@media(max-width:900px){.hero-grid{grid-template-columns:repeat(2,1fr)}}
+.hero-grid a{background:#0e0e12;padding:22px 18px;text-decoration:none;color:#fff;transition:background .35s}
+.hero-grid a:hover{background:#1a1a22}
+.hero-grid .n{font-family:'Space Mono',monospace;font-size:10px;color:#8a8a94;display:block;margin-bottom:10px}
+.hero-grid .t{display:block;font-size:14px;font-weight:600;letter-spacing:.01em}
+.hero-grid .d{display:block;font-size:11px;color:#7a7a84;margin-top:5px;line-height:1.4}
+.scroll-hint{position:absolute;bottom:26px;left:50%;transform:translateX(-50%);font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:#6a6a74;animation:hintFloat 2.4s ease-in-out infinite}
+@keyframes hintFloat{0%,100%{transform:translate(-50%,0)}50%{transform:translate(-50%,8px)}}
+.outro{background:#0e0e12;padding:14vh 0 16vh}
+.outro-inner{width:min(1180px,88vw);margin:0 auto}
+.outro h2{font-family:'Fraunces',serif;font-weight:300;font-size:clamp(36px,4.5vw,64px);letter-spacing:-.02em;margin-bottom:8vh}
+.outro h2 em{font-style:italic}
+.matrix{width:100%;border-collapse:collapse;font-size:13px}
+.matrix th{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#8a8a94;text-align:left;padding:14px 12px;border-bottom:1px solid rgba(255,255,255,.25)}
+.matrix td{padding:16px 12px;border-bottom:1px solid rgba(255,255,255,.1);vertical-align:top;line-height:1.5;color:#c8c8d0}
+.matrix td:first-child{color:#fff;font-weight:600;white-space:nowrap}
+.matrix tr{transition:background .3s}
+.matrix tbody tr:hover{background:rgba(255,255,255,.04)}
+.matrix .dots i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px}
+.outro .foot{margin-top:8vh;font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#6a6a74}
+
+/* ============ 01 SPROUT — round & friendly ============ */
+.s-sprout{background:#fff8e8;color:#4b4b4b}
+.s-sprout h2{font-family:'Baloo 2',sans-serif;font-weight:800;color:#3c3c3c}
+.s-sprout .app{font-family:'Baloo 2',sans-serif;background:#fff;border:2px solid #e8e2cf;border-radius:26px;padding:22px;box-shadow:0 6px 0 #e8e2cf}
+.s-sprout .brand{font-weight:800;font-size:20px;color:#58cc02;letter-spacing:-.02em}
+.s-sprout .streak{background:#fff2d6;color:#b25e09;font-weight:700;border:2px solid #ffe1a3;border-radius:99px;padding:5px 12px}
+.s-sprout .face{min-height:170px;background:#fff;border:2px solid #e8e2cf;border-radius:20px;padding:22px;display:flex;flex-direction:column;justify-content:center;box-shadow:0 4px 0 #e8e2cf}
+.s-sprout .face.back{background:#ddf4ff;border-color:#b7e2f8;box-shadow:0 4px 0 #b7e2f8;color:#155e86;text-align:center}
+.s-sprout .face.back .q-text{font-weight:800;font-size:24px}
+.s-sprout .q-label{color:#afafaf;font-weight:700}
+.s-sprout .q-text{font-weight:600;color:#3c3c3c}
+.s-sprout .flip-hint{color:#afafaf;font-weight:700}
+.s-sprout .bar{background:#eee9d8;height:12px}
+.s-sprout .bar i{background:#58cc02;width:0}
+.s-sprout.in .bar i{width:35%}
+.s-sprout .prog-label{color:#afafaf;font-weight:700}
+.s-sprout .chip{border:2px solid;border-radius:99px;font-weight:700;background:#fff;box-shadow:0 3px 0 rgba(0,0,0,.06)}
+.s-sprout .chip.c1{color:#1cb0f6;border-color:#bfe8fd}
+.s-sprout .chip.c2{color:#ce82ff;border-color:#ecd9ff}
+.s-sprout .chip.c3{color:#ff9600;border-color:#ffe3b3}
+.s-sprout .cta{background:#58cc02;color:#fff;border-radius:18px;font-family:'Baloo 2',sans-serif;font-weight:800;font-size:17px;box-shadow:0 5px 0 #46a302;transition:transform .12s,box-shadow .12s;letter-spacing:.01em}
+.s-sprout .cta:hover{filter:brightness(1.05)}
+.s-sprout .cta:active{transform:translateY(5px);box-shadow:0 0 0 #46a302}
+.s-sprout .blob{position:absolute;border-radius:50%;opacity:.5;pointer-events:none}
+
+/* ============ 02 ATHENAEUM — all serif ============ */
+.s-athenaeum{background:#f4efe4;color:#26211a}
+.s-athenaeum h2{font-family:'Newsreader',serif;font-weight:500;letter-spacing:-.02em}
+.s-athenaeum .tag{font-family:'Newsreader',serif;font-size:19px;font-style:italic}
+.s-athenaeum .app{font-family:'Newsreader',serif;padding:8px 4px;border-top:1px solid #26211a;border-bottom:1px solid #26211a}
+.s-athenaeum .app-top{font-size:13px;letter-spacing:.14em;text-transform:uppercase;font-family:'Newsreader',serif}
+.s-athenaeum .brand{font-weight:600;font-variant:small-caps;letter-spacing:.18em;font-size:16px}
+.s-athenaeum .streak{font-style:italic;text-transform:none;letter-spacing:0;font-size:14px}
+.s-athenaeum .face{min-height:190px;padding:26px 6px;border-bottom:1px solid #d9cfbc;display:flex;flex-direction:column;justify-content:center;background:transparent}
+.s-athenaeum .face.back{text-align:center;font-style:italic}
+.s-athenaeum .face.back .q-text{font-size:26px}
+.s-athenaeum .q-label{font-variant:small-caps;letter-spacing:.3em}
+.s-athenaeum .q-text{font-size:24px;line-height:1.35}
+.s-athenaeum .prog-label{font-variant:small-caps;letter-spacing:.24em;font-size:12px;opacity:.7}
+.s-athenaeum .bar{height:1px;background:#d9cfbc;border-radius:0}
+.s-athenaeum .bar i{background:#b0542c;border-radius:0;width:0}
+.s-athenaeum.in .bar i{width:35%}
+.s-athenaeum .chip{border:none;border-bottom:1px solid #b0542c;border-radius:0;padding:3px 2px;font-size:14px;font-style:italic;background:none;color:#26211a}
+.s-athenaeum .cta{background:none;border:1px solid #26211a;border-radius:0;font-family:'Newsreader',serif;font-weight:500;font-size:17px;font-variant:small-caps;letter-spacing:.22em;padding:15px;transition:background .4s,color .4s}
+.s-athenaeum .cta:hover{background:#26211a;color:#f4efe4}
+.s-athenaeum .rule{display:flex;align-items:center;gap:14px;margin:18px 0;opacity:.6}
+.s-athenaeum .rule::before,.s-athenaeum .rule::after{content:"";flex:1;height:1px;background:#26211a}
+.s-athenaeum .rule span{font-size:11px}
+
+/* ============ 03 PIXEL TERMINAL ============ */
+.s-pixel{background:#000;color:#fff;font-family:'VT323',monospace}
+.s-pixel::after{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,.28) 0 1px,transparent 1px 3px);mix-blend-mode:multiply}
+.s-pixel h2{font-family:'VT323',monospace;font-weight:400;letter-spacing:.04em;text-transform:uppercase}
+.s-pixel .tag,.s-pixel .notes li{font-family:'Space Mono',monospace}
+.s-pixel .app{font-family:'VT323',monospace;border:2px solid #fff;padding:20px;clip-path:polygon(0 8px,8px 8px,8px 0,calc(100% - 8px) 0,calc(100% - 8px) 8px,100% 8px,100% calc(100% - 8px),calc(100% - 8px) calc(100% - 8px),calc(100% - 8px) 100%,8px 100%,8px calc(100% - 8px),0 calc(100% - 8px));background:#000;position:relative;z-index:1}
+.s-pixel .brand{font-size:26px;letter-spacing:.1em;text-transform:uppercase}
+.s-pixel .streak{font-family:'Space Mono',monospace;border:1px solid #fff;padding:4px 10px}
+.s-pixel .marq{border-top:1px solid #333;border-bottom:1px solid #333;overflow:hidden;white-space:nowrap;margin-bottom:16px;padding:6px 0}
+.s-pixel .marq span{display:inline-block;font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.24em;text-transform:uppercase;animation:pxMarq 18s linear infinite}
+@keyframes pxMarq{to{transform:translateX(-50%)}}
+.s-pixel .face{min-height:180px;border:1px solid #fff;padding:24px;display:flex;flex-direction:column;justify-content:center;background:#000}
+.s-pixel .face.back{align-items:center;text-align:center}
+.s-pixel .q-label{font-family:'Space Mono',monospace;color:#888}
+.s-pixel .q-text{font-size:30px;line-height:1.15;text-transform:uppercase}
+.s-pixel .flip-hint{font-family:'Space Mono',monospace;animation:blink 1.1s steps(2) infinite}
+@keyframes blink{50%{opacity:0}}
+.s-pixel .bar{height:14px;border:1px solid #fff;border-radius:0;background:none}
+.s-pixel .bar i{background:repeating-linear-gradient(90deg,#fff 0 6px,transparent 6px 9px);border-radius:0;width:0}
+.s-pixel.in .bar i{width:35%}
+.s-pixel .prog-label{font-family:'Space Mono',monospace}
+.s-pixel .chip{border:1px solid #fff;border-radius:0;font-family:'Space Mono',monospace;background:none;color:#fff;font-size:11px;transition:background .1s,color .1s}
+.s-pixel .chip:hover{background:#fff;color:#000}
+.s-pixel .cta{background:#fff;color:#000;border-radius:0;font-family:'VT323',monospace;font-size:24px;letter-spacing:.12em;text-transform:uppercase;position:relative;animation:keyflick .3s steps(2) infinite paused}
+.s-pixel .cta:hover{animation-play-state:running}
+@keyframes keyflick{50%{background:#000;color:#fff;box-shadow:inset 0 0 0 2px #fff}}
+.s-pixel .key{display:inline-block;border:1px solid #fff;padding:0 6px;margin-right:8px;font-family:'Space Mono',monospace;font-size:11px;vertical-align:2px;clip-path:polygon(0 3px,3px 3px,3px 0,calc(100% - 3px) 0,calc(100% - 3px) 3px,100% 3px,100% calc(100% - 3px),calc(100% - 3px) calc(100% - 3px),calc(100% - 3px) 100%,3px 100%,3px calc(100% - 3px),0 calc(100% - 3px))}
+.s-pixel .pxm{image-rendering:pixelated;position:absolute;right:6%;top:12%;width:120px;opacity:.9;z-index:0}
+
+/* ============ 04 CARD CATALOG — ink & paper ============ */
+.s-catalog{background:#fafafa;color:#0a0a0a}
+.s-catalog h2{font-family:'IBM Plex Mono',monospace;font-weight:600;letter-spacing:-.04em;text-transform:uppercase}
+.s-catalog .app{font-family:'IBM Plex Mono',monospace;background:#fff;border:1px solid #e5e5e5;padding:0;box-shadow:0 1px 0 #e5e5e5,0 14px 30px -18px rgba(0,0,0,.18)}
+.s-catalog .app-top{padding:14px 20px;border-bottom:1px solid #e5e5e5;font-size:11px;letter-spacing:.14em;text-transform:uppercase}
+.s-catalog .brand{font-weight:600}
+.s-catalog .streak{border:1px solid #0a0a0a;padding:3px 9px;border-radius:0}
+.s-catalog .flash{margin:0;border-bottom:1px solid #e5e5e5}
+.s-catalog .face{min-height:190px;padding:26px 20px;display:flex;flex-direction:column;justify-content:center;background:repeating-linear-gradient(0deg,transparent 0 27px,#eee 27px 28px);background-position:0 6px}
+.s-catalog .face .q-text{font-family:'Newsreader',serif;font-size:22px;line-height:28px}
+.s-catalog .face.back{align-items:flex-start;background:repeating-linear-gradient(0deg,transparent 0 27px,#eee 27px 28px);background-position:0 6px}
+.s-catalog .face.back .q-text{font-style:italic}
+.s-catalog .q-label{color:#8a8a8a}
+.s-catalog .flip-hint{color:#8a8a8a}
+.s-catalog .prog{padding:16px 20px 0}
+.s-catalog .bar{height:5px;border-radius:0;background:#eee}
+.s-catalog .bar i{background:#0a0a0a;border-radius:0;width:0}
+.s-catalog.in .bar i{width:35%}
+.s-catalog .chips{padding:4px 20px 16px}
+.s-catalog .chip{border:1px solid #e5e5e5;border-radius:0;background:#fafafa;color:#0a0a0a;font-size:11px;letter-spacing:.08em}
+.s-catalog .cta{border-radius:0;background:#0a0a0a;color:#fafafa;font-family:'IBM Plex Mono',monospace;letter-spacing:.2em;text-transform:uppercase;font-size:12px;padding:18px;transition:letter-spacing .3s}
+.s-catalog .cta:hover{letter-spacing:.34em}
+.s-catalog .stamp{position:absolute;right:14px;bottom:64px;border:2px solid #0a0a0a;padding:5px 10px;font-size:10px;letter-spacing:.2em;transform:rotate(6deg);opacity:.8}
+.s-catalog .flash{position:relative}
+
+/* ============ 05 ACID ARCADE ============ */
+.s-acid{background:#000;color:#f3f3f3}
+.s-acid h2{font-family:'Archivo Black',sans-serif;text-transform:uppercase;letter-spacing:-.03em;color:#c6d32d}
+.s-acid .tag{font-family:'Space Grotesk',sans-serif}
+.s-acid .app{font-family:'Space Grotesk',sans-serif;border:1px solid #282828;background:#000;padding:0;position:relative;z-index:1}
+.s-acid .app-top{padding:14px 18px;border-bottom:1px solid #282828;text-transform:uppercase;letter-spacing:-.02em}
+.s-acid .brand{font-family:'Archivo Black',sans-serif;color:#c6d32d;font-size:17px}
+.s-acid .streak{color:#bcbec0;border:1px solid #3834ff;padding:4px 10px;background:#3834ff;color:#fff;text-transform:uppercase;letter-spacing:.06em;font-weight:700}
+.s-acid .trophies{display:flex;gap:6px;padding:12px 18px;border-bottom:1px solid #282828}
+.s-acid .trophy{flex:1;height:30px;display:flex;align-items:center;justify-content:center;font-size:10px;letter-spacing:.14em;text-transform:uppercase;background:#141414;color:#606161;border:1px solid #282828}
+.s-acid .trophy.on{background:#c6d32d;color:#000;border-color:#c6d32d;font-weight:700}
+.s-acid .face{min-height:170px;padding:26px 18px;display:flex;flex-direction:column;justify-content:center;background:#000;border-bottom:1px solid #282828}
+.s-acid .face.back{text-align:center;background:#c6d32d;color:#000}
+.s-acid .face.back .q-label{color:#000;opacity:.6}
+.s-acid .face.back .q-text{font-family:'Archivo Black',sans-serif}
+.s-acid .q-label{color:#606161}
+.s-acid .q-text{font-size:21px;font-weight:700;text-transform:uppercase;letter-spacing:-.02em;line-height:1.2}
+.s-acid .flip-hint{color:#606161}
+.s-acid .prog{padding:16px 18px 0}
+.s-acid .prog-label{color:#606161}
+.s-acid .bar{height:10px;border-radius:0;background:#141414;border:1px solid #282828}
+.s-acid .bar i{background:#c6d32d;border-radius:0;width:0}
+.s-acid.in .bar i{width:35%}
+.s-acid .chips{padding:4px 18px 16px}
+.s-acid .chip{border-radius:0;border:1px solid #282828;background:#000;color:#bcbec0;text-transform:uppercase;font-size:11px;letter-spacing:.08em;transition:border-color .2s,color .2s}
+.s-acid .chip:hover{border-color:#c6d32d;color:#c6d32d}
+.s-acid .cta{border-radius:0;background:#3834ff;color:#fff;font-family:'Archivo Black',sans-serif;text-transform:uppercase;font-size:14px;letter-spacing:.04em;padding:18px;transition:background .25s}
+.s-acid .cta:hover{background:#c6d32d;color:#000}
+.s-acid .marqbg{position:absolute;left:0;right:0;top:6%;overflow:hidden;white-space:nowrap;opacity:.16;pointer-events:none}
+.s-acid .marqbg span{display:inline-block;font-family:'Archivo Black',sans-serif;font-size:120px;text-transform:uppercase;color:#282828;animation:acidMarq 26s linear infinite}
+@keyframes acidMarq{to{transform:translateX(-50%)}}
+</style>
+<style>
+/* ============ 06 FIELD NOTES — knowledge graph ============ */
+.s-field{background:#f5f6f2;color:#111}
+.s-field h2{font-family:'Sora',sans-serif;font-weight:700;letter-spacing:-.03em}
+.s-field .app{font-family:'Sora',sans-serif;background:#fff;border-radius:7px;padding:0;box-shadow:0 1px 2px rgba(0,0,0,.05);font-size:13px}
+.s-field .app-top{padding:16px 20px;border-bottom:1px dashed #111;font-size:13px}
+.s-field .brand{font-weight:700;letter-spacing:-.01em}
+.s-field .streak{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:#888}
+.s-field .streak b{color:#ff5f1f;font-weight:700}
+.s-field .graph{padding:14px 20px;border-bottom:1px dashed #111;display:flex;align-items:center;gap:14px}
+.s-field .graph svg{flex:none}
+.s-field .graph .g-cap{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:#888;line-height:1.6}
+.s-field .graph .g-cap s{color:#888}
+.s-field .graph .g-cap .here{color:#ff5f1f;animation:fieldBlink 1s infinite}
+@keyframes fieldBlink{50%{opacity:.25}}
+.s-field .face{min-height:165px;padding:24px 20px;display:flex;flex-direction:column;justify-content:center;background:#fff;border-bottom:1px dashed #111}
+.s-field .face.back{background:#fff;text-align:center}
+.s-field .face.back .q-text{font-weight:700}
+.s-field .q-label{font-family:'Space Mono',monospace;color:#888}
+.s-field .q-text{font-size:17px;line-height:1.45}
+.s-field .flip-hint{font-family:'Space Mono',monospace}
+.s-field .prog{padding:14px 20px 0}
+.s-field .prog-label{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.05em;color:#888}
+.s-field .bar{height:4px;border-radius:0;background:#eceee7}
+.s-field .bar i{background:#ff5f1f;border-radius:0;width:0}
+.s-field.in .bar i{width:35%}
+.s-field .chips{padding:6px 20px 14px}
+.s-field .chip{border:1px solid #e3e5de;border-radius:99px;background:#fff;color:#111;font-size:12px;transition:border-color .2s}
+.s-field .chip:hover{border-color:#ff5f1f}
+.s-field .cta{border-radius:0 0 7px 7px;background:#111;color:#f5f6f2;font-family:'Sora',sans-serif;font-weight:600;font-size:13px;padding:15px;display:flex;align-items:center;justify-content:center;gap:9px;transition:background .3s}
+.s-field .cta::before{content:"";width:8px;height:8px;border-radius:50%;background:#ff5f1f;flex:none;transition:transform .3s}
+.s-field .cta:hover{background:#000}
+.s-field .cta:hover::before{transform:scale(1.5)}
+.s-field .spin{animation:spin 10s linear infinite;transform-origin:center}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ============ 07 HERBARIUM — botanical journal ============ */
+.s-herbarium{background:#fcfbf8;color:#2e332b}
+.s-herbarium h2{font-family:'Fraunces',serif;font-weight:900;letter-spacing:-.02em}
+.s-herbarium h2 em{font-weight:300;font-style:italic}
+.s-herbarium .tag{font-family:'Fraunces',serif;font-size:19px}
+.s-herbarium .app{font-family:'Fraunces',serif;background:#fff;border:1px solid #e4e0d4;border-radius:4px;padding:30px 28px;box-shadow:0 24px 50px -30px rgba(60,70,50,.28)}
+.s-herbarium .app-top{margin-bottom:22px}
+.s-herbarium .brand{font-weight:600;font-size:21px;letter-spacing:-.01em}
+.s-herbarium .brand::before{content:"№ ";font-weight:300;color:#7a8b6f}
+.s-herbarium .streak{font-style:italic;color:#7a8b6f;font-size:14px}
+.s-herbarium .face{min-height:180px;padding:8px 0 22px;border-bottom:1px solid #e4e0d4;display:flex;flex-direction:column;justify-content:center;background:transparent}
+.s-herbarium .face.back{text-align:center}
+.s-herbarium .face.back .q-text{font-size:27px;font-weight:600;font-style:italic;color:#33412f}
+.s-herbarium .q-label{color:#7a8b6f;font-family:'Fraunces',serif;font-style:italic;font-size:13px;text-transform:none;letter-spacing:.06em}
+.s-herbarium .q-text{font-size:23px;line-height:1.35}
+.s-herbarium .flip-hint{font-style:italic;text-transform:none;letter-spacing:.04em;font-size:12px;color:#b5bdae}
+.s-herbarium .prog{margin-top:20px}
+.s-herbarium .prog-label{font-style:italic;text-transform:none;letter-spacing:.03em;font-size:13px;color:#7a8b6f}
+.s-herbarium .bar{height:2px;background:#e4e0d4;border-radius:0}
+.s-herbarium .bar i{background:#7a8b6f;border-radius:0;width:0}
+.s-herbarium.in .bar i{width:35%}
+.s-herbarium .chip{border:none;border-radius:0;padding:3px 0;border-bottom:1px solid #b96a4b;background:none;color:#2e332b;font-family:'Fraunces',serif;font-style:italic;font-size:15px;margin-right:6px}
+.s-herbarium .cta{background:none;border:1px solid #33412f;border-radius:99px;color:#33412f;font-family:'Fraunces',serif;font-weight:600;font-size:16px;padding:15px;margin-top:6px;transition:background .5s,color .5s}
+.s-herbarium .cta:hover{background:#33412f;color:#fcfbf8}
+.s-herbarium .leaf{position:absolute;left:4%;bottom:6%;width:180px;opacity:.5;pointer-events:none}
+
+/* ============ 08 EXAMINATION — swiss red ============ */
+.s-exam{background:#fafaf7;color:#1a1a1a}
+.s-exam h2{font-family:'Archivo',sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:-.04em}
+.s-exam h2 .red{color:#e30613}
+.s-exam .app{font-family:'Archivo',sans-serif;background:#fff;border:2px solid #1a1a1a;padding:0}
+.s-exam .app-top{padding:12px 18px;border-bottom:2px solid #1a1a1a;text-transform:uppercase;font-size:11px;letter-spacing:.14em;font-weight:700}
+.s-exam .brand{font-weight:800}
+.s-exam .brand .red{color:#e30613}
+.s-exam .streak{background:#e30613;color:#fff;padding:4px 10px;border-radius:0}
+.s-exam .exam-strip{background:#e30613;color:#fff;font-size:10px;letter-spacing:.3em;text-transform:uppercase;padding:7px 18px;font-weight:700}
+.s-exam .face{min-height:185px;padding:26px 18px;display:flex;flex-direction:column;justify-content:center;background:#fff;border-bottom:2px solid #1a1a1a}
+.s-exam .face.back{background:#1a1a1a;color:#fafaf7;text-align:center}
+.s-exam .face.back .q-label{color:#e30613;opacity:1}
+.s-exam .q-label{color:#e30613;font-weight:700}
+.s-exam .q-text{font-size:20px;font-weight:600;line-height:1.3}
+.s-exam .flip-hint{color:#8a8a8a;font-weight:600}
+.s-exam .prog{padding:16px 18px 0}
+.s-exam .prog-label{font-weight:700;opacity:1;color:#1a1a1a}
+.s-exam .bar{height:9px;border-radius:0;background:#fff;border:2px solid #1a1a1a}
+.s-exam .bar i{background:#e30613;border-radius:0;width:0}
+.s-exam.in .bar i{width:35%}
+.s-exam .chips{padding:6px 18px 16px}
+.s-exam .chip{border-radius:0;border:2px solid #1a1a1a;background:#fff;color:#1a1a1a;font-weight:700;text-transform:uppercase;font-size:11px;letter-spacing:.08em;transition:background .15s,color .15s}
+.s-exam .chip:hover{background:#1a1a1a;color:#fff}
+.s-exam .cta{border-radius:0;background:#e30613;color:#fff;font-family:'Archivo',sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:.06em;font-size:14px;padding:18px;transition:background .2s}
+.s-exam .cta:hover{background:#1a1a1a}
+.s-exam .giant{position:absolute;right:-1vw;bottom:-4vh;font-family:'Archivo',sans-serif;font-weight:800;font-size:26vw;line-height:.8;color:transparent;-webkit-text-stroke:1px #e3e1d8;pointer-events:none;text-transform:uppercase}
+
+/* ============ 09 BLUEPRINT ============ */
+.s-blueprint{background:#123054;color:#cfe3f5}
+.s-blueprint::before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(207,227,245,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(207,227,245,.07) 1px,transparent 1px);background-size:26px 26px;pointer-events:none}
+.s-blueprint h2{font-family:'IBM Plex Mono',monospace;font-weight:600;letter-spacing:-.03em;text-transform:uppercase}
+.s-blueprint .tag,.s-blueprint .notes li{font-family:'IBM Plex Mono',monospace}
+.s-blueprint .app{font-family:'IBM Plex Mono',monospace;background:rgba(18,48,84,.55);border:1px solid #6fc6ff;padding:0;position:relative}
+.s-blueprint .app::before,.s-blueprint .app::after{content:"+";position:absolute;color:#6fc6ff;font-size:14px;line-height:1}
+.s-blueprint .app::before{top:-8px;left:-5px}
+.s-blueprint .app::after{bottom:-9px;right:-5px}
+.s-blueprint .app-top{padding:14px 18px;border-bottom:1px dashed rgba(111,198,255,.5);font-size:11px;letter-spacing:.16em;text-transform:uppercase}
+.s-blueprint .brand{font-weight:600;color:#fff}
+.s-blueprint .streak{border:1px solid #6fc6ff;padding:3px 9px;border-radius:0;color:#6fc6ff}
+.s-blueprint .face{min-height:185px;padding:26px 18px;display:flex;flex-direction:column;justify-content:center;background:transparent;border-bottom:1px dashed rgba(111,198,255,.5)}
+.s-blueprint .face.back{text-align:center}
+.s-blueprint .face.back .q-text{color:#fff}
+.s-blueprint .q-label{color:#6fc6ff}
+.s-blueprint .q-text{font-size:19px;line-height:1.5}
+.s-blueprint .flip-hint{color:#6fc6ff}
+.s-blueprint .prog{padding:16px 18px 0}
+.s-blueprint .prog-label{color:#6fc6ff}
+.s-blueprint .bar{height:8px;border-radius:0;background:none;border:1px solid #6fc6ff;padding:1px}
+.s-blueprint .bar i{background:#6fc6ff;border-radius:0;width:0}
+.s-blueprint.in .bar i{width:35%}
+.s-blueprint .chips{padding:6px 18px 16px}
+.s-blueprint .chip{border-radius:0;border:1px solid rgba(111,198,255,.5);background:none;color:#cfe3f5;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;transition:border-color .2s,color .2s}
+.s-blueprint .chip:hover{border-color:#fff;color:#fff}
+.s-blueprint .cta{border-radius:0;background:none;border-top:1px dashed rgba(111,198,255,.5);color:#fff;font-family:'IBM Plex Mono',monospace;font-weight:600;letter-spacing:.22em;text-transform:uppercase;font-size:12px;padding:17px;transition:background .3s}
+.s-blueprint .cta:hover{background:rgba(111,198,255,.15)}
+.s-blueprint .dim{position:absolute;left:8%;top:10%;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.2em;color:#6fc6ff;opacity:.7}
+
+/* ============ 10 SORBET — soft pastel ============ */
+.s-sorbet{background:linear-gradient(155deg,#ffe9dd 0%,#f1e7ff 52%,#e2f1ff 100%);color:#3a3344}
+.s-sorbet h2{font-family:'DM Sans',sans-serif;font-weight:700;letter-spacing:-.03em}
+.s-sorbet h2 span{background:linear-gradient(90deg,#7c5cff,#ff8fb1);-webkit-background-clip:text;background-clip:text;color:transparent}
+.s-sorbet .app{font-family:'DM Sans',sans-serif;background:rgba(255,255,255,.72);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);border-radius:30px;padding:24px;box-shadow:0 30px 60px -30px rgba(90,60,120,.3);border:1px solid rgba(255,255,255,.8)}
+.s-sorbet .brand{font-weight:700;font-size:19px;letter-spacing:-.02em}
+.s-sorbet .streak{background:rgba(124,92,255,.12);color:#7c5cff;font-weight:700;border-radius:99px;padding:5px 12px}
+.s-sorbet .face{min-height:170px;background:#fff;border-radius:22px;padding:24px;display:flex;flex-direction:column;justify-content:center;box-shadow:0 10px 26px -14px rgba(90,60,120,.18)}
+.s-sorbet .face.back{text-align:center;background:linear-gradient(135deg,#7c5cff,#ff8fb1);color:#fff}
+.s-sorbet .face.back .q-label,.s-sorbet .face.back .flip-hint{color:rgba(255,255,255,.75);opacity:1}
+.s-sorbet .q-label{color:#a49fb2}
+.s-sorbet .q-text{font-size:19px;font-weight:500}
+.s-sorbet .flip-hint{color:#a49fb2}
+.s-sorbet .bar{background:rgba(90,60,120,.1)}
+.s-sorbet .bar i{background:linear-gradient(90deg,#7c5cff,#ff8fb1);width:0}
+.s-sorbet.in .bar i{width:35%}
+.s-sorbet .prog-label{color:#a49fb2}
+.s-sorbet .chip{background:#fff;border-radius:99px;color:#3a3344;font-weight:500;box-shadow:0 4px 12px -6px rgba(90,60,120,.2)}
+.s-sorbet .cta{border-radius:99px;background:linear-gradient(90deg,#7c5cff,#ff8fb1);color:#fff;font-family:'DM Sans',sans-serif;font-weight:700;font-size:16px;box-shadow:0 14px 30px -12px rgba(124,92,255,.55);transition:transform .3s cubic-bezier(.3,1.4,.4,1),box-shadow .3s}
+.s-sorbet .cta:hover{transform:translateY(-2px) scale(1.01);box-shadow:0 20px 38px -12px rgba(124,92,255,.6)}
+.s-sorbet .orb{position:absolute;border-radius:50%;filter:blur(60px);pointer-events:none;opacity:.55}
+</style>
+</head>
+<body>
+
+<nav class="index" id="index">
+  <a href="#sprout"><span class="ix">01</span><span class="nm">Sprout</span></a>
+  <a href="#athenaeum"><span class="ix">02</span><span class="nm">Athenaeum</span></a>
+  <a href="#pixel"><span class="ix">03</span><span class="nm">Pixel</span></a>
+  <a href="#catalog"><span class="ix">04</span><span class="nm">Catalog</span></a>
+  <a href="#acid"><span class="ix">05</span><span class="nm">Acid</span></a>
+  <a href="#field"><span class="ix">06</span><span class="nm">Field Notes</span></a>
+  <a href="#herbarium"><span class="ix">07</span><span class="nm">Herbarium</span></a>
+  <a href="#exam"><span class="ix">08</span><span class="nm">Examination</span></a>
+  <a href="#blueprint"><span class="ix">09</span><span class="nm">Blueprint</span></a>
+  <a href="#sorbet"><span class="ix">10</span><span class="nm">Sorbet</span></a>
+</nav>
+
+<header class="hero">
+  <div class="hero-inner">
+    <p class="kicker">Design language study · 10 directions</p>
+    <h1>One study app, <em>ten souls.</em></h1>
+    <p class="sub">Every vignette below renders the same screen — today's flashcard, the streak, the unit progress, the start button — in a completely different design language. Scroll slowly. Tap a card to flip it. Decide which one feels like your app.</p>
+    <div class="hero-grid">
+      <a href="#sprout"><span class="n">01</span><span class="t">Sprout</span><span class="d">Round, warm, endlessly encouraging</span></a>
+      <a href="#athenaeum"><span class="n">02</span><span class="t">Athenaeum</span><span class="d">All-serif, quiet, bookish</span></a>
+      <a href="#pixel"><span class="n">03</span><span class="t">Pixel Terminal</span><span class="d">Bitmap type, black phosphor</span></a>
+      <a href="#catalog"><span class="n">04</span><span class="t">Card Catalog</span><span class="d">Library ink on ruled paper</span></a>
+      <a href="#acid"><span class="n">05</span><span class="t">Acid Arcade</span><span class="d">Console achievements, lime on black</span></a>
+      <a href="#field"><span class="n">06</span><span class="t">Field Notes</span><span class="d">A knowledge map, dashed and orange</span></a>
+      <a href="#herbarium"><span class="n">07</span><span class="t">Herbarium</span><span class="d">Pressed-leaf journal, sage &amp; clay</span></a>
+      <a href="#exam"><span class="n">08</span><span class="t">Examination</span><span class="d">Swiss grid, disciplinary red</span></a>
+      <a href="#blueprint"><span class="n">09</span><span class="t">Blueprint</span><span class="d">Technical drawing, cyan on navy</span></a>
+      <a href="#sorbet"><span class="n">10</span><span class="t">Sorbet</span><span class="d">Glassy pastel, weightless</span></a>
+    </div>
+  </div>
+  <div class="scroll-hint">Scroll to explore</div>
+</header>
+
+<!-- 01 SPROUT -->
+<section class="lang s-sprout" id="sprout">
+  <div class="blob" style="width:340px;height:340px;background:#ddf4ff;top:-80px;right:-60px"></div>
+  <div class="blob" style="width:220px;height:220px;background:#e9ffd2;bottom:6%;left:38%"></div>
+  <div class="wrap">
+    <div class="lang-head">
+      <span class="num">01 — Direction</span>
+      <h2>Sprout</h2>
+      <p class="tag">The Duolingo instinct, refined: fat radius, candy colors, and buttons you can physically press. Learning should feel like a toy you can't put down.</p>
+      <div class="swatches"><i style="background:#fff8e8"></i><i style="background:#58cc02"></i><i style="background:#1cb0f6"></i><i style="background:#ffc800"></i><i style="background:#ce82ff"></i></div>
+      <ul class="spec"><li>Baloo 2</li><li>Radius 20–26px</li><li>3D press buttons</li><li>Spring easing</li></ul>
+      <ul class="notes">
+        <li>Personality: a coach that celebrates every rep. Zero intimidation.</li>
+        <li>Signature move: 5px bottom-edge buttons that sink when pressed — tactile reward.</li>
+        <li>Watch-out: can read as childish for university+ audiences; dial the saturation down for older users.</li>
+      </ul>
+    </div>
+    <div class="app">
+      <div class="app-top"><span class="brand">sprout</span><span class="streak"><svg width="13" height="15" viewBox="0 0 13 15"><path d="M6.5 0C6.5 3 2 4.5 2 9a4.5 4.5 0 009 0c0-2-1.2-3.4-2.2-4.6C8 5.9 7.4 7.2 6.8 7.2 6 7.2 6.5 4.4 6.5 0z" fill="#ff9600"/></svg>12-day streak</span></div>
+      <div class="flash" onclick="this.classList.toggle('flipped')">
+        <div class="flash-inner">
+          <div class="face"><span class="q-label">Biology · Card 7</span><span class="q-text">Which organelle is called the powerhouse of the cell?</span><span class="flip-hint">Tap to flip</span></div>
+          <div class="face back"><div><span class="q-label" style="color:#5a96b5">Answer</span><span class="q-text">The mitochondria!</span></div></div>
+        </div>
+      </div>
+      <div class="prog"><div class="prog-label"><span>Unit 3 · Cell structure</span><span>7/20</span></div><div class="bar"><i></i></div></div>
+      <div class="chips"><span class="chip c1">Biology</span><span class="chip c2">History</span><span class="chip c3">Math</span></div>
+      <button class="cta">Start today's session</button>
+    </div>
+  </div>
+</section>
+
+<!-- 02 ATHENAEUM -->
+<section class="lang s-athenaeum" id="athenaeum">
+  <div class="wrap">
+    <div class="lang-head">
+      <span class="num">02 — Direction</span>
+      <h2>Athenaeum</h2>
+      <p class="tag">The Claude instinct: everything serif, nothing rounded, hairline rules instead of boxes. The app reads like a well-set book — calm, literate, quietly premium.</p>
+      <div class="swatches"><i style="background:#f4efe4"></i><i style="background:#26211a"></i><i style="background:#b0542c"></i><i style="background:#d9cfbc"></i></div>
+      <ul class="spec"><li>Newsreader</li><li>Radius 0</li><li>Hairline rules</li><li>Small caps</li></ul>
+      <ul class="notes">
+        <li>Personality: a librarian with excellent taste. Serious without being cold.</li>
+        <li>Signature move: no cards at all — rhythm comes from rules, italics, and numbering.</li>
+        <li>Watch-out: low visual energy; gamification must live in the copy, not the chrome.</li>
+      </ul>
+    </div>
+    <div class="app">
+      <div class="app-top"><span class="brand">Athenaeum</span><span class="streak">twelve evenings running</span></div>
+      <div class="flash" onclick="this.classList.toggle('flipped')">
+        <div class="flash-inner">
+          <div class="face"><span class="q-label">Question the seventh — Biology</span><span class="q-text">Which organelle is called the powerhouse of the cell?</span><span class="flip-hint">Turn the card</span></div>
+          <div class="face back"><div><span class="q-label">The answer</span><span class="q-text">the mitochondria</span></div></div>
+        </div>
+      </div>
+      <div class="rule"><span>·&nbsp;&nbsp;·&nbsp;&nbsp;·</span></div>
+      <div class="prog"><div class="prog-label"><span>Third chapter, of cells</span><span>7 of 20</span></div><div class="bar"><i></i></div></div>
+      <div class="chips"><span class="chip">biology,</span><span class="chip">history,</span><span class="chip">mathematics</span></div>
+      <button class="cta">Begin this evening's reading</button>
+    </div>
+  </div>
+</section>
+
+<!-- 03 PIXEL -->
+<section class="lang s-pixel" id="pixel">
+  <svg class="pxm" width="120" height="120" viewBox="0 0 10 10"><rect x="3" y="1" width="1" height="1" fill="#fff"/><rect x="6" y="1" width="1" height="1" fill="#fff"/><rect x="2" y="2" width="1" height="1" fill="#fff"/><rect x="3" y="2" width="1" height="1" fill="#fff"/><rect x="4" y="2" width="1" height="1" fill="#fff"/><rect x="5" y="2" width="1" height="1" fill="#fff"/><rect x="6" y="2" width="1" height="1" fill="#fff"/><rect x="7" y="2" width="1" height="1" fill="#fff"/><rect x="2" y="3" width="1" height="1" fill="#fff"/><rect x="4" y="3" width="1" height="1" fill="#fff"/><rect x="5" y="3" width="1" height="1" fill="#fff"/><rect x="7" y="3" width="1" height="1" fill="#fff"/><rect x="2" y="4" width="1" height="1" fill="#fff"/><rect x="3" y="4" width="1" height="1" fill="#fff"/><rect x="4" y="4" width="1" height="1" fill="#fff"/><rect x="5" y="4" width="1" height="1" fill="#fff"/><rect x="6" y="4" width="1" height="1" fill="#fff"/><rect x="7" y="4" width="1" height="1" fill="#fff"/><rect x="3" y="5" width="1" height="1" fill="#fff"/><rect x="6" y="5" width="1" height="1" fill="#fff"/><rect x="4" y="6" width="1" height="1" fill="#fff"/><rect x="5" y="6" width="1" height="1" fill="#fff"/><rect x="4" y="7" width="1" height="1" fill="#fff"/><rect x="5" y="7" width="1" height="1" fill="#fff"/><rect x="3" y="8" width="1" height="1" fill="#fff"/><rect x="6" y="8" width="1" height="1" fill="#fff"/></svg>
+  <div class="wrap">
+    <div class="lang-head">
+      <span class="num">03 — Direction</span>
+      <h2>Pixel Terminal</h2>
+      <p class="tag">The Kimi instinct, pushed further: strict black-on-black, bitmap type, scanlines, and keycaps instead of buttons. Studying as a homebrew console cartridge.</p>
+      <div class="swatches"><i style="background:#000;border-color:#444"></i><i style="background:#fff"></i></div>
+      <ul class="spec"><li>VT323 + Space Mono</li><li>Clipped corners</li><li>CRT scanlines</li><li>Cursor flicker</li></ul>
+      <ul class="notes">
+        <li>Personality: a machine that respects you. No cute mascot — just clean signal.</li>
+        <li>Signature move: keyboard-first UI with keycap hints; hover triggers terminal flicker.</li>
+        <li>Watch-out: monochrome means hierarchy must come from type scale and spacing alone.</li>
+      </ul>
+    </div>
+    <div class="app">
+      <div class="app-top"><span class="brand">STUDY.EXE</span><span class="streak">STREAK 012</span></div>
+      <div class="marq"><span>UNIT 3 LOADED ··· 20 CARDS ··· DIFFICULTY: NORMAL ··· UNIT 3 LOADED ··· 20 CARDS ··· DIFFICULTY: NORMAL ··· </span></div>
+      <div class="flash" onclick="this.classList.toggle('flipped')">
+        <div class="flash-inner">
+          <div class="face"><span class="q-label">&gt; QUERY 07/20 [BIO]</span><span class="q-text">Which organelle is the powerhouse of the cell?</span><span class="flip-hint"><span class="key">SPACE</span>flip card_</span></div>
+          <div class="face back"><div><span class="q-label">&gt; RESULT</span><span class="q-text">MITOCHONDRIA</span></div></div>
+        </div>
+      </div>
+      <div class="prog"><div class="prog-label"><span>SECTOR 3</span><span>[███████░░░░░░░░░░░░░] 7/20</span></div><div class="bar"><i></i></div></div>
+      <div class="chips"><span class="chip">[B] BIOLOGY</span><span class="chip">[H] HISTORY</span><span class="chip">[M] MATH</span></div>
+      <button class="cta"><span class="key" style="border-color:#000">ENTER</span>PRESS START</button>
+    </div>
+  </div>
+</section>
+
+<!-- 04 CATALOG -->
+<section class="lang s-catalog" id="catalog">
+  <div class="wrap">
+    <div class="lang-head">
+      <span class="num">04 — Direction</span>
+      <h2>Card Catalog</h2>
+      <p class="tag">Pure ink and paper, zero accent colors. Every screen is a ruled index card from a library drawer — stamped, dated, and due back Friday. Quietly obsessive.</p>
+      <div class="swatches"><i style="background:#fafafa"></i><i style="background:#0a0a0a"></i><i style="background:#e5e5e5"></i></div>
+      <ul class="spec"><li>IBM Plex Mono</li><li>Ruled lines</li><li>Stamps &amp; dates</li><li>No accent color</li></ul>
+      <ul class="notes">
+        <li>Personality: archival, procedural, satisfyingly bureaucratic.</li>
+        <li>Signature move: progress and streaks rendered as due-date stamps and call numbers.</li>
+        <li>Watch-out: accessibility — monochrome UIs need generous contrast and spacing discipline.</li>
+      </ul>
+    </div>
+    <div class="app">
+      <div class="app-top"><span class="brand">CATALOG / 570 BIO</span><span class="streak">12 DAYS ON LOAN</span></div>
+      <div class="flash" onclick="this.classList.toggle('flipped')">
+        <div class="flash-inner">
+          <div class="face"><span class="q-label">CARD NO. 07 — CELL BIOLOGY</span><span class="q-text">Which organelle is called the powerhouse of the cell?</span><span class="flip-hint">TURN CARD OVER</span></div>
+          <div class="face back"><div><span class="q-label">CARD NO. 07 — VERSO</span><span class="q-text">The mitochondria.</span></div></div>
+        </div>
+        <span class="stamp">DUE BACK FRI</span>
+      </div>
+      <div class="prog"><div class="prog-label"><span>DRAWER 3 OF 8</span><span>07 / 20 FILED</span></div><div class="bar"><i></i></div></div>
+      <div class="chips"><span class="chip">570 BIOLOGY</span><span class="chip">930 HISTORY</span><span class="chip">510 MATH</span></div>
+      <button class="cta">Check out today's cards</button>
+    </div>
+  </div>
+</section>
+
+<!-- 05 ACID -->
+<section class="lang s-acid" id="acid">
+  <div class="marqbg"><span>GRIND · UNLOCK · REPEAT · GRIND · UNLOCK · REPEAT · GRIND · UNLOCK · REPEAT · </span></div>
+  <div class="wrap">
+    <div class="lang-head">
+      <span class="num">05 — Direction</span>
+      <h2>Acid Arcade</h2>
+      <p class="tag">Console-achievement energy: acid lime and electric blue on black, trophies with locked "???" states, everything uppercase and grotesk. Study as ranked season.</p>
+      <div class="swatches"><i style="background:#000;border-color:#444"></i><i style="background:#c6d32d"></i><i style="background:#3834ff"></i><i style="background:#bcbec0"></i></div>
+      <ul class="spec"><li>Archivo Black</li><li>All caps, −0.03em</li><li>Trophy states</li><li>Opposing marquees</li></ul>
+      <ul class="notes">
+        <li>Personality: competitive, loud, built for streak culture and leaderboards.</li>
+        <li>Signature move: locked achievements as "???" placeholders — curiosity as the hook.</li>
+        <li>Watch-out: high stimulation; offer a focus mode that drops to greys only.</li>
+      </ul>
+    </div>
+    <div class="app">
+      <div class="app-top"><span class="brand">GRIND</span><span class="streak">STREAK ×12</span></div>
+      <div class="trophies"><span class="trophy on">7-DAY</span><span class="trophy on">100 CARDS</span><span class="trophy">???</span><span class="trophy">???</span></div>
+      <div class="flash" onclick="this.classList.toggle('flipped')">
+        <div class="flash-inner">
+          <div class="face"><span class="q-label">QUEST 07 — BIOLOGY</span><span class="q-text">Which organelle is the powerhouse of the cell?</span><span class="flip-hint">Tap to reveal</span></div>
+          <div class="face back"><div><span class="q-label">Unlocked</span><span class="q-text">MITOCHONDRIA</span></div></div>
+        </div>
+      </div>
+      <div class="prog"><div class="prog-label"><span>ACHIEVEMENT PROGRESS</span><span>7/20</span></div><div class="bar"><i></i></div></div>
+      <div class="chips"><span class="chip">BIOLOGY</span><span class="chip">HISTORY</span><span class="chip">MATH</span></div>
+      <button class="cta">Start the grind</button>
+    </div>
+  </div>
+</section>
+
+<!-- 06 FIELD NOTES -->
+<section class="lang s-field" id="field">
+  <div class="wrap">
+    <div class="lang-head">
+      <span class="num">06 — Direction</span>
+      <h2>Field Notes</h2>
+      <p class="tag">The app as an explorable knowledge map: warm off-white, dashed borders, mono micro-labels, and one signature orange. Subjects are nodes; learning is traversal.</p>
+      <div class="swatches"><i style="background:#f5f6f2"></i><i style="background:#fff"></i><i style="background:#111"></i><i style="background:#ff5f1f"></i></div>
+      <ul class="spec"><li>Sora + Space Mono</li><li>7px radius cards</li><li>Dashed dividers</li><li>Visited = strike-through</li></ul>
+      <ul class="notes">
+        <li>Personality: a researcher's field notebook — spatial, curious, self-directed.</li>
+        <li>Signature move: finished cards get struck through; the current node blinks orange.</li>
+        <li>Watch-out: graph UIs need a simple linear fallback for small screens and tired brains.</li>
+      </ul>
+    </div>
+    <div class="app">
+      <div class="app-top"><span class="brand">Field Notes</span><span class="streak">PATH HELD FOR <b>12 DAYS</b></span></div>
+      <div class="graph">
+        <svg width="120" height="64" viewBox="0 0 120 64" fill="none">
+          <path d="M18 44 L52 20 L86 32" stroke="#111" stroke-dasharray="3 3" stroke-width="1"/>
+          <path d="M52 20 L100 12" stroke="#111" stroke-dasharray="3 3" stroke-width="1"/>
+          <g class="spin"><path d="M18 38 L20 42 L24 42 L21 45 L22 49 L18 47 L14 49 L15 45 L12 42 L16 42 Z" fill="#ff5f1f"/></g>
+          <rect x="47" y="15" width="10" height="10" fill="#fff" stroke="#111"/>
+          <circle cx="86" cy="32" r="5" fill="#fff" stroke="#111"/>
+          <path d="M100 6 L106 17 L94 17 Z" fill="#fff" stroke="#111"/>
+        </svg>
+        <p class="g-cap"><s>1. Atoms</s> · <s>2. Membranes</s><br><span class="here">3. Organelles ●</span> · 4. Division</p>
+      </div>
+      <div class="flash" onclick="this.classList.toggle('flipped')">
+        <div class="flash-inner">
+          <div class="face"><span class="q-label">NODE 3.7 — ORGANELLES</span><span class="q-text">Which organelle is called the powerhouse of the cell?</span><span class="flip-hint">FLIP CARD</span></div>
+          <div class="face back"><div><span class="q-label">NODE 3.7 — VERSO</span><span class="q-text">The mitochondria.</span></div></div>
+        </div>
+      </div>
+      <div class="prog"><div class="prog-label"><span>NODES VISITED</span><span>7 / 20</span></div><div class="bar"><i></i></div></div>
+      <div class="chips"><span class="chip">Biology</span><span class="chip">History</span><span class="chip">Math</span></div>
+      <button class="cta">Open today's path</button>
+    </div>
+  </div>
+</section>
+
+<!-- 07 HERBARIUM -->
+<section class="lang s-herbarium" id="herbarium">
+  <svg class="leaf" width="180" height="180" viewBox="0 0 100 100" fill="none" stroke="#7a8b6f" stroke-width="1">
+    <path d="M50 92 C50 60 50 30 50 8"/>
+    <path d="M50 78 C36 74 26 62 24 48 C38 52 48 64 50 78Z"/>
+    <path d="M50 78 C64 74 74 62 76 48 C62 52 52 64 50 78Z"/>
+    <path d="M50 58 C38 54 30 44 28 32 C40 36 48 46 50 58Z"/>
+    <path d="M50 58 C62 54 70 44 72 32 C60 36 52 46 50 58Z"/>
+    <path d="M50 38 C41 34 35 26 34 17 C43 21 49 29 50 38Z"/>
+    <path d="M50 38 C59 34 65 26 66 17 C57 21 51 29 50 38Z"/>
+  </svg>
+  <div class="wrap">
+    <div class="lang-head">
+      <span class="num">07 — Direction</span>
+      <h2>Her<em>barium</em></h2>
+      <p class="tag">A pressed-flower journal for studying: botanical serif, sage greens, specimen numbering, italic annotations. Slow, deliberate, a little romantic.</p>
+      <div class="swatches"><i style="background:#fcfbf8"></i><i style="background:#33412f"></i><i style="background:#7a8b6f"></i><i style="background:#b96a4b"></i></div>
+      <ul class="spec"><li>Fraunces</li><li>№ specimen numbers</li><li>Thin line engraving</li><li>4px radius only</li></ul>
+      <ul class="notes">
+        <li>Personality: the app as a garden you tend. Growth metaphors everywhere.</li>
+        <li>Signature move: every deck is a "plate", every card a numbered specimen.</li>
+        <li>Watch-out: serif-heavy UIs demand large sizes; keep body text 17px+ on mobile.</li>
+      </ul>
+    </div>
+    <div class="app">
+      <div class="app-top"><span class="brand">Herbarium</span><span class="streak">tended twelve days</span></div>
+      <div class="flash" onclick="this.classList.toggle('flipped')">
+        <div class="flash-inner">
+          <div class="face"><span class="q-label">Plate III, specimen seven — the cell</span><span class="q-text">Which organelle is called the powerhouse of the cell?</span><span class="flip-hint">lift the specimen</span></div>
+          <div class="face back"><div><span class="q-label">identified</span><span class="q-text">Mitochondria</span></div></div>
+        </div>
+      </div>
+      <div class="prog"><div class="prog-label"><span>the third plate, of cells</span><span>7 of 20 pressed</span></div><div class="bar"><i></i></div></div>
+      <div class="chips"><span class="chip">biology,</span><span class="chip">history,</span><span class="chip">mathematics</span></div>
+      <button class="cta">Begin the day's pressing</button>
+    </div>
+  </div>
+</section>
+
+<!-- 08 EXAM -->
+<section class="lang s-exam" id="exam">
+  <div class="giant">EXAM</div>
+  <div class="wrap">
+    <div class="lang-head">
+      <span class="num">08 — Direction</span>
+      <h2>Exam<span class="red">ination</span></h2>
+      <p class="tag">Swiss rigor with a disciplinary streak: red blocks, black rules, square corners, numbered everything. The app treats your session like a formal sitting — and you rise to it.</p>
+      <div class="swatches"><i style="background:#fafaf7"></i><i style="background:#e30613"></i><i style="background:#1a1a1a"></i></div>
+      <ul class="spec"><li>Archivo 800</li><li>2px rules, 0 radius</li><li>Grid numbering</li><li>Red = action only</li></ul>
+      <ul class="notes">
+        <li>Personality: the strict examiner who secretly wants you to ace it.</li>
+        <li>Signature move: one red, used with total discipline — CTAs, streaks, warnings.</li>
+        <li>Watch-out: intensity fatigue; this language works best for exam-prep products specifically.</li>
+      </ul>
+    </div>
+    <div class="app">
+      <div class="app-top"><span class="brand">EXAM<span class="red">/</span>APP</span><span class="streak">SITTING №12</span></div>
+      <div class="exam-strip">Section A — Cell Biology — Answer all questions</div>
+      <div class="flash" onclick="this.classList.toggle('flipped')">
+        <div class="flash-inner">
+          <div class="face"><span class="q-label">Question 07 / 20</span><span class="q-text">Which organelle is called the powerhouse of the cell?</span><span class="flip-hint">Turn over for marking key</span></div>
+          <div class="face back"><div><span class="q-label">Marking key</span><span class="q-text">The mitochondria.</span></div></div>
+        </div>
+      </div>
+      <div class="prog"><div class="prog-label"><span>Answered</span><span>07 / 20</span></div><div class="bar"><i></i></div></div>
+      <div class="chips"><span class="chip">A·Biology</span><span class="chip">B·History</span><span class="chip">C·Math</span></div>
+      <button class="cta">Commence sitting</button>
+    </div>
+  </div>
+</section>
+
+<!-- 09 BLUEPRINT -->
+<section class="lang s-blueprint" id="blueprint">
+  <div class="dim">FIG. 09 — SESSION SCHEMATIC — SCALE 1:1</div>
+  <div class="wrap">
+    <div class="lang-head">
+      <span class="num">09 — Direction</span>
+      <h2>Blueprint</h2>
+      <p class="tag">Engineering-drawing aesthetics: cyan ink on navy vellum, dimension marks, mono type, crosshair registration. Every study session is a build with a spec sheet.</p>
+      <div class="swatches"><i style="background:#123054"></i><i style="background:#6fc6ff"></i><i style="background:#cfe3f5"></i></div>
+      <ul class="spec"><li>IBM Plex Mono</li><li>26px grid</li><li>Dashed datum lines</li><li>+ registration marks</li></ul>
+      <ul class="notes">
+        <li>Personality: precise, methodical, maker-culture. Knowledge is constructed.</li>
+        <li>Signature move: progress bars as dimension lines; decks labeled FIG. 1, FIG. 2…</li>
+        <li>Watch-out: dark mono UIs get samey fast — vary stroke weight and label density.</li>
+      </ul>
+    </div>
+    <div class="app">
+      <div class="app-top"><span class="brand">BLUEPRINT.EDU</span><span class="streak">SEQ. STREAK 12</span></div>
+      <div class="flash" onclick="this.classList.toggle('flipped')">
+        <div class="flash-inner">
+          <div class="face"><span class="q-label">ITEM 07/20 — CELL ASSEMBLY</span><span class="q-text">Which organelle is called the powerhouse of the cell?</span><span class="flip-hint">[ FLIP SPEC SHEET ]</span></div>
+          <div class="face back"><div><span class="q-label">SPECIFICATION</span><span class="q-text">MITOCHONDRIA — VERIFIED ✓</span></div></div>
+        </div>
+      </div>
+      <div class="prog"><div class="prog-label"><span>SECTOR 3 — CELL STRUCTURE</span><span>07 / 20</span></div><div class="bar"><i></i></div></div>
+      <div class="chips"><span class="chip">BIO.SYS</span><span class="chip">HIST.SYS</span><span class="chip">MATH.SYS</span></div>
+      <button class="cta">▶ Initialize review sequence</button>
+    </div>
+  </div>
+</section>
+
+<!-- 10 SORBET -->
+<section class="lang s-sorbet" id="sorbet">
+  <div class="orb" style="width:300px;height:300px;background:#ffc7a8;top:-60px;left:-60px"></div>
+  <div class="orb" style="width:260px;height:260px;background:#b9c8ff;bottom:8%;right:10%"></div>
+  <div class="wrap">
+    <div class="lang-head">
+      <span class="num">10 — Direction</span>
+      <h2>Sor<span>bet</span></h2>
+      <p class="tag">Weightless and soft: frosted glass, gradient accents, pills with 100px radius, shadows that float instead of ground. The calmest possible way to open a study session.</p>
+      <div class="swatches"><i style="background:#ffe9dd"></i><i style="background:#f1e7ff"></i><i style="background:#7c5cff"></i><i style="background:#ff8fb1"></i></div>
+      <ul class="spec"><li>DM Sans</li><li>Radius 22–99px</li><li>Backdrop blur</li><li>Gradient actions</li></ul>
+      <ul class="notes">
+        <li>Personality: gentle, airy, zero friction. Great for anxious learners.</li>
+        <li>Signature move: color lives only in gradients and blurs; surfaces stay white glass.</li>
+        <li>Watch-out: low contrast risk — always test text over the blurred gradients.</li>
+      </ul>
+    </div>
+    <div class="app">
+      <div class="app-top"><span class="brand">sorbet</span><span class="streak">12-day streak</span></div>
+      <div class="flash" onclick="this.classList.toggle('flipped')">
+        <div class="flash-inner">
+          <div class="face"><span class="q-label">Biology · Card 7 of 20</span><span class="q-text">Which organelle is called the powerhouse of the cell?</span><span class="flip-hint">Tap to flip</span></div>
+          <div class="face back"><div><span class="q-label">Answer</span><span class="q-text">The mitochondria</span></div></div>
+        </div>
+      </div>
+      <div class="prog"><div class="prog-label"><span>Unit 3 · Cell structure</span><span>35%</span></div><div class="bar"><i></i></div></div>
+      <div class="chips"><span class="chip">Biology</span><span class="chip">History</span><span class="chip">Math</span></div>
+      <button class="cta">Start today's session</button>
+    </div>
+  </div>
+</section>
+
+<!-- OUTRO -->
+<footer class="outro">
+  <div class="outro-inner">
+    <h2>Ten directions, <em>at a glance.</em></h2>
+    <table class="matrix">
+      <thead><tr><th>Language</th><th>Palette</th><th>Type</th><th>Feels like</th><th>Best for</th></tr></thead>
+      <tbody>
+        <tr><td>01 Sprout</td><td class="dots"><i style="background:#58cc02"></i><i style="background:#1cb0f6"></i><i style="background:#ffc800"></i></td><td>Baloo 2</td><td>A cheerful coach</td><td>Kids, casual learners, habit-building</td></tr>
+        <tr><td>02 Athenaeum</td><td class="dots"><i style="background:#f4efe4;border-color:#888"></i><i style="background:#26211a"></i><i style="background:#b0542c"></i></td><td>Newsreader</td><td>A well-set book</td><td>Adults, humanities, long-form focus</td></tr>
+        <tr><td>03 Pixel Terminal</td><td class="dots"><i style="background:#000"></i><i style="background:#fff"></i></td><td>VT323</td><td>A homebrew console</td><td>Developers, keyboard-power users</td></tr>
+        <tr><td>04 Card Catalog</td><td class="dots"><i style="background:#fafaf7;border-color:#888"></i><i style="background:#0a0a0a"></i></td><td>Plex Mono + serif</td><td>A library drawer</td><td>Archival vibes, spaced repetition</td></tr>
+        <tr><td>05 Acid Arcade</td><td class="dots"><i style="background:#c6d32d"></i><i style="background:#3834ff"></i><i style="background:#000"></i></td><td>Archivo Black</td><td>A ranked season</td><td>Competitive streaks, leaderboards</td></tr>
+        <tr><td>06 Field Notes</td><td class="dots"><i style="background:#f5f6f2;border-color:#888"></i><i style="background:#111"></i><i style="background:#ff5f1f"></i></td><td>Sora + Space Mono</td><td>A knowledge map</td><td>Self-directed, non-linear learners</td></tr>
+        <tr><td>07 Herbarium</td><td class="dots"><i style="background:#fcfbf8;border-color:#888"></i><i style="background:#7a8b6f"></i><i style="background:#b96a4b"></i></td><td>Fraunces</td><td>A tended garden</td><td>Wellness-adjacent, slow learning</td></tr>
+        <tr><td>08 Examination</td><td class="dots"><i style="background:#fafaf7;border-color:#888"></i><i style="background:#e30613"></i><i style="background:#1a1a1a"></i></td><td>Archivo 800</td><td>A formal sitting</td><td>Exam prep, certifications</td></tr>
+        <tr><td>09 Blueprint</td><td class="dots"><i style="background:#123054"></i><i style="background:#6fc6ff"></i></td><td>IBM Plex Mono</td><td>A build spec</td><td>STEM, engineering, maker culture</td></tr>
+        <tr><td>10 Sorbet</td><td class="dots"><i style="background:#7c5cff"></i><i style="background:#ff8fb1"></i><i style="background:#ffe9dd;border-color:#888"></i></td><td>DM Sans</td><td>A deep breath</td><td>Anxious learners, wellness positioning</td></tr>
+      </tbody>
+    </table>
+    <p class="foot">Ten languages · same screen · pick the soul, then systemize it</p>
+  </div>
+</footer>
+
+<script>
+const io = new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      e.target.classList.add('in');
+      const id = e.target.id;
+      document.querySelectorAll('.index a').forEach(a=>{
+        a.classList.toggle('active', a.getAttribute('href') === '#'+id);
+      });
+    }
+  });
+},{threshold:.35});
+document.querySelectorAll('.lang').forEach(s=>io.observe(s));
+
+/* keyboard flip for pixel theme flavor */
+document.addEventListener('keydown',(e)=>{
+  if(e.code==='Space'){
+    const px = document.querySelector('#pixel.in .flash');
+    if(px){ e.preventDefault(); px.classList.toggle('flipped'); }
+  }
+});
+</script>
+<div style="position:fixed;right:22px;bottom:22px;z-index:99;display:flex;flex-direction:column;gap:8px;align-items:flex-end">
+<a href="app.html" style="background:#ff5f1f;color:#fff;font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;padding:13px 17px;text-decoration:none;border:1px solid #000;box-shadow:3px 3px 0 #000">New: Looseleaf full app mockup →</a>
+<a href="paper-notes.html" style="background:#fff;color:#000;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;padding:10px 14px;text-decoration:none;border:1px solid #000;box-shadow:3px 3px 0 #000">Direction 11 spec, 3 modes →</a>
+</div>
+</body>
+</html>
