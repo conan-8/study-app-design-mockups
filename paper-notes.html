@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Looseleaf — a class-notes design language, in three modes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,900;1,9..144,400;1,9..144,600&family=Sora:wght@300;400;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Caveat:wght@500;700&display=swap" rel="stylesheet">
+<style>
+/* ================= MODES ================= */
+body[data-mode="light"]{
+  --paper:#f7f2e6; --sheet:#fffdf4; --ink:#28231a; --muted:#8d8371;
+  --line:#ddd3bd; --accent:#ff5f1f; --right:#58cc02; --wrong:#ff4b4b; --info:#1cb0f6;
+  --grain-op:.05; --rule:rgba(141,131,113,.16); --shadow:#28231a;
+  --tab:#fffdf4; --grid:none;
+}
+body[data-mode="dark"]{
+  --paper:#1d1915; --sheet:#29241e; --ink:#f1eadd; --muted:#9a8f7c;
+  --line:#453e33; --accent:#ff7a45; --right:#7bd94a; --wrong:#ff6b6b; --info:#4fc3f7;
+  --grain-op:.09; --rule:rgba(241,234,221,.09); --shadow:#000;
+  --tab:#29241e; --grid:none;
+}
+body[data-mode="blueprint"]{
+  --paper:#123054; --sheet:#163a66; --ink:#d5e8f8; --muted:#84abc9;
+  --line:rgba(111,198,255,.4); --accent:#6fc6ff; --right:#4ade80; --wrong:#ff7a7a; --info:#6fc6ff;
+  --grain-op:.04; --rule:rgba(111,198,255,.12); --shadow:#0a1f38;
+  --tab:#163a66;
+  --grid:linear-gradient(rgba(111,198,255,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(111,198,255,.08) 1px,transparent 1px);
+}
+
+/* ================= BASE ================= */
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background:var(--paper); color:var(--ink);
+  font-family:'Sora',sans-serif; -webkit-font-smoothing:antialiased;
+  transition:background .5s, color .5s; overflow-x:hidden;
+}
+body::before{ /* paper grain */
+  content:""; position:fixed; inset:0; pointer-events:none; z-index:1; opacity:var(--grain-op);
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+body[data-mode="blueprint"]::after{ /* blueprint grid */
+  content:""; position:fixed; inset:0; pointer-events:none; z-index:0;
+  background-image:var(--grid); background-size:26px 26px;
+}
+::selection{background:var(--accent);color:var(--paper)}
+.mono{font-family:'Space Mono',monospace}
+.serif{font-family:'Fraunces',serif}
+.page{position:relative;z-index:2}
+
+/* ================= HEADER / MODE TABS ================= */
+.topbar{
+  position:sticky; top:0; z-index:50; display:flex; justify-content:space-between; align-items:flex-end;
+  padding:14px 5vw 0; background:linear-gradient(var(--paper) 78%,transparent); transition:background .5s;
+}
+.brandline{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.26em;text-transform:uppercase;color:var(--muted);padding-bottom:12px}
+.tabs{display:flex; gap:6px; align-items:flex-end}
+.tab{
+  font-family:'Space Mono',monospace; font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+  padding:10px 16px 9px; border:1.5px solid var(--ink); border-bottom:none; border-radius:4px 4px 0 0;
+  background:transparent; color:var(--muted); cursor:pointer; position:relative; top:1.5px;
+  transition:background .25s,color .25s,transform .25s;
+}
+.tab:hover{transform:translateY(-2px);color:var(--ink)}
+.tab.on{background:var(--tab);color:var(--ink);font-weight:700;border-bottom:1.5px solid var(--tab)}
+.tab .dot{display:inline-block;width:8px;height:8px;margin-right:7px;border:1.5px solid currentColor;vertical-align:0}
+.tab[data-go="light"] .dot{background:#f7f2e6}
+.tab[data-go="dark"] .dot{background:#1d1915}
+.tab[data-go="blueprint"] .dot{background:#123054}
+
+/* ================= HERO ================= */
+.hero{max-width:1160px;margin:0 auto;padding:9vh 5vw 5vh;position:relative}
+.kicker{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--accent);margin-bottom:22px}
+.hero h1{font-family:'Fraunces',serif;font-weight:900;font-size:clamp(52px,7.4vw,110px);line-height:.94;letter-spacing:-.02em}
+.hero h1 em{font-style:italic;font-weight:400}
+.hero .lede{margin-top:26px;max-width:58ch;font-size:16.5px;line-height:1.7;color:var(--muted)}
+.hero .lede b{color:var(--ink);font-weight:600}
+.margin-note{position:absolute;font-family:'Caveat',cursive;font-size:21px;color:var(--accent);transform:rotate(-4deg);line-height:1.2;pointer-events:none}
+@media(max-width:900px){.margin-note{display:none}}
+
+/* ================= PAPER SHEET (demo) ================= */
+.demo{max-width:1160px;margin:6vh auto;padding:0 5vw;display:grid;grid-template-columns:1.05fr .95fr;gap:5vw;align-items:start}
+@media(max-width:900px){.demo{grid-template-columns:1fr;gap:44px}}
+.sheet{
+  background:var(--sheet); border:1.5px solid var(--ink); border-radius:3px; position:relative;
+  box-shadow:6px 6px 0 var(--shadow); transform:rotate(-1.1deg);
+  transition:background .5s, box-shadow .3s, transform .35s cubic-bezier(.3,1.4,.4,1);
+}
+.sheet:hover{transform:rotate(0deg)}
+.sheet::before,.sheet::after{ /* tape strips */
+  content:""; position:absolute; width:88px; height:24px; top:-13px;
+  background:color-mix(in srgb, var(--accent) 26%, transparent);
+  border:1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  transform:rotate(-4deg); opacity:.9;
+}
+.sheet::before{left:22px}
+.sheet::after{right:22px;transform:rotate(3deg)}
+body[data-mode="blueprint"] .sheet::before,body[data-mode="blueprint"] .sheet::after{background:rgba(111,198,255,.18);border-color:rgba(111,198,255,.3)}
+.sheet-in{padding:26px 26px 0;position:relative}
+
+.app-top{display:flex;justify-content:space-between;align-items:baseline;padding-bottom:16px;border-bottom:1.5px dashed var(--line)}
+.app-brand{font-family:'Fraunces',serif;font-weight:900;font-size:24px;letter-spacing:-.01em}
+.app-brand span{color:var(--accent)}
+.streak{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.streak b{color:var(--accent)}
+
+.subj{display:flex;gap:8px;padding:14px 0;border-bottom:1.5px dashed var(--line)}
+.subj .s{
+  font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.1em;padding:7px 13px;
+  border:1.5px solid var(--ink);border-radius:3px;background:transparent;color:var(--ink);cursor:pointer;
+  transition:all .15s; box-shadow:2px 2px 0 transparent;
+}
+.subj .s:hover{transform:translate(-1px,-1px);box-shadow:3px 3px 0 var(--ink)}
+.subj .s.on{background:var(--ink);color:var(--sheet);box-shadow:2px 2px 0 var(--accent)}
+
+.card{
+  margin:20px 0; border:1.5px solid var(--ink); border-radius:3px; cursor:pointer; position:relative;
+  perspective:1100px; background:var(--sheet);
+}
+.card-in{position:relative;transform-style:preserve-3d;transition:transform .65s cubic-bezier(.3,1.2,.3,1)}
+.card.flipped .card-in{transform:rotateX(180deg)}
+.face{
+  min-height:190px; padding:26px 24px; display:flex; flex-direction:column; justify-content:center;
+  backface-visibility:hidden;
+  background:repeating-linear-gradient(0deg,transparent 0 30px,var(--rule) 30px 31px); background-position:0 8px;
+}
+.face.back{position:absolute;inset:0;transform:rotateX(180deg);text-align:center;align-items:center}
+.face .no{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted);margin-bottom:14px}
+.face .q{font-family:'Fraunces',serif;font-size:24px;line-height:1.32;font-weight:600}
+.face.back .q{font-style:italic;color:var(--accent)}
+.face .hint{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-top:18px}
+.dogear{position:absolute;right:0;bottom:0;width:0;height:0;border-style:solid;border-width:0 0 26px 26px;border-color:transparent transparent var(--line) transparent;transition:border-color .3s}
+.card:hover .dogear{border-color:transparent transparent var(--accent) transparent}
+
+/* right / wrong — duolingo-clear */
+.judge{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+.judge button{
+  font-family:'Sora',sans-serif;font-weight:700;font-size:14px;padding:15px;border-radius:3px;cursor:pointer;
+  border:2px solid; background:transparent; transition:all .12s; letter-spacing:.01em;
+}
+.judge .got{border-color:var(--right);color:var(--right);box-shadow:3px 3px 0 var(--right)}
+.judge .miss{border-color:var(--wrong);color:var(--wrong);box-shadow:3px 3px 0 var(--wrong)}
+.judge button:hover{transform:translate(-1px,-1px)}
+.judge .got:hover{background:color-mix(in srgb, var(--right) 12%, transparent)}
+.judge .miss:hover{background:color-mix(in srgb, var(--wrong) 12%, transparent)}
+.judge button:active{transform:translate(3px,3px);box-shadow:0 0 0}
+
+.prog{padding-bottom:22px}
+.prog-top{display:flex;justify-content:space-between;font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:9px}
+.pbar{height:12px;border:1.5px solid var(--ink);border-radius:2px;overflow:hidden;background:var(--sheet)}
+.pbar i{display:block;height:100%;width:35%;background:repeating-linear-gradient(-45deg,var(--accent) 0 8px,color-mix(in srgb,var(--accent) 55%,transparent) 8px 16px);transition:width .8s cubic-bezier(.16,1,.3,1)}
+
+/* feedback banner */
+.banner{
+  margin:0 -26px; padding:0 26px; max-height:0; overflow:hidden; transition:max-height .45s cubic-bezier(.16,1,.3,1), padding .45s;
+  font-family:'Sora',sans-serif;
+}
+.banner.show{max-height:90px;padding:16px 26px}
+.banner.ok{background:var(--right);color:#fff}
+.banner.no{background:var(--wrong);color:#fff}
+.banner .b-t{font-weight:800;font-size:15px;letter-spacing:.01em}
+.banner .b-s{font-size:12.5px;opacity:.85;margin-top:2px;font-family:'Space Mono',monospace}
+
+/* demo side column */
+.demo-side h2{font-family:'Fraunces',serif;font-weight:900;font-size:clamp(30px,3.4vw,44px);line-height:1.05;letter-spacing:-.01em;margin-bottom:18px}
+.demo-side p{font-size:15px;line-height:1.7;color:var(--muted);max-width:46ch;margin-bottom:22px}
+.demo-side p b{color:var(--ink);font-weight:600}
+.spec-chips{display:flex;flex-wrap:wrap;gap:8px}
+.spec-chips li{list-style:none;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;padding:8px 12px;border:1.5px solid var(--ink);border-radius:3px}
+.count-line{font-family:'Space Mono',monospace;font-size:12px;letter-spacing:.1em;color:var(--muted);margin-top:26px}
+.count-line b{color:var(--right)}
+.count-line i{color:var(--wrong);font-style:normal}
+
+/* ================= SPECIMEN ================= */
+.specimen{max-width:1160px;margin:10vh auto 0;padding:0 5vw 12vh}
+.spec-head{display:flex;align-items:baseline;gap:20px;border-bottom:1.5px solid var(--ink);padding-bottom:14px;margin-bottom:0}
+.spec-head h2{font-family:'Fraunces',serif;font-weight:900;font-size:clamp(28px,3vw,40px);letter-spacing:-.01em}
+.spec-head .mono{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted)}
+.srow{display:grid;grid-template-columns:220px 1fr;gap:4vw;padding:36px 0;border-bottom:1.5px dashed var(--line);align-items:start}
+@media(max-width:800px){.srow{grid-template-columns:1fr;gap:20px}}
+.srow .lbl{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+.srow .lbl small{display:block;margin-top:8px;color:var(--accent);letter-spacing:.1em}
+
+.type-demo .t1{font-family:'Fraunces',serif;font-weight:900;font-size:44px;letter-spacing:-.02em;line-height:1}
+.type-demo .t2{font-family:'Sora',sans-serif;font-size:16px;line-height:1.65;color:var(--ink);max-width:52ch;margin-top:14px}
+.type-demo .t3{font-family:'Space Mono',monospace;font-size:13px;margin-top:14px;color:var(--muted)}
+.type-demo .t3 b{color:var(--accent);font-weight:700}
+
+.pal{display:flex;flex-wrap:wrap;gap:10px}
+.pal .sw{width:96px}
+.pal .sw i{display:block;height:56px;border:1.5px solid var(--ink);border-radius:3px}
+.pal .sw span{display:block;font-family:'Space Mono',monospace;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:7px}
+
+.comp{display:flex;flex-wrap:wrap;gap:16px;align-items:center}
+.btn{font-family:'Sora',sans-serif;font-weight:700;font-size:14px;padding:14px 22px;border-radius:3px;cursor:pointer;border:2px solid var(--ink);transition:all .12s}
+.btn.pri{background:var(--ink);color:var(--sheet);box-shadow:4px 4px 0 var(--accent)}
+.btn.sec{background:transparent;color:var(--ink);box-shadow:4px 4px 0 var(--ink)}
+.btn.ghost{border-style:dashed;background:transparent;color:var(--muted);box-shadow:none}
+.btn:hover{transform:translate(-1px,-1px)}
+.btn.pri:hover{box-shadow:5px 5px 0 var(--accent)}
+.btn.sec:hover{box-shadow:5px 5px 0 var(--ink)}
+.btn:active{transform:translate(4px,4px);box-shadow:0 0 0}
+.chipx{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.1em;padding:8px 14px;border:1.5px solid var(--ink);border-radius:3px;background:var(--sheet)}
+.tog{width:52px;height:28px;border:2px solid var(--ink);border-radius:3px;position:relative;cursor:pointer;background:var(--sheet);transition:background .25s}
+.tog i{position:absolute;top:2px;left:2px;width:20px;height:20px;background:var(--ink);border-radius:2px;transition:left .25s cubic-bezier(.3,1.4,.4,1),background .25s}
+.tog.on{background:var(--right);border-color:var(--right)}
+.tog.on i{left:26px;background:#fff}
+.inp{font-family:'Space Mono',monospace;font-size:13px;padding:13px 16px;border:1.5px solid var(--ink);border-radius:3px;background:var(--sheet);color:var(--ink);width:250px;outline:none;transition:box-shadow .2s}
+.inp:focus{box-shadow:4px 4px 0 var(--accent)}
+.inp::placeholder{color:var(--muted)}
+
+.fb{display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:640px}
+@media(max-width:640px){.fb{grid-template-columns:1fr}}
+.fb .fc{border:1.5px solid var(--ink);border-radius:3px;background:var(--sheet);padding:18px 20px 18px 24px;position:relative;overflow:hidden}
+.fb .fc::before{content:"";position:absolute;left:0;top:0;bottom:0;width:8px}
+.fb .fc.ok::before{background:var(--right)}
+.fb .fc.no::before{background:var(--wrong)}
+.fb .fc .s1{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.2em;text-transform:uppercase;margin-bottom:8px}
+.fb .fc.ok .s1{color:var(--right)}
+.fb .fc.no .s1{color:var(--wrong)}
+.fb .fc .s2{font-family:'Fraunces',serif;font-size:18px;font-weight:600}
+
+.foot{max-width:1160px;margin:0 auto;padding:6vh 5vw 10vh;display:flex;justify-content:space-between;align-items:center;border-top:1.5px solid var(--ink)}
+.foot .mono{font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted)}
+.foot a{color:var(--accent);font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;text-decoration:none;border-bottom:1.5px dashed var(--accent)}
+
+/* reveal */
+.rv{opacity:0;transform:translateY(22px);transition:opacity .8s cubic-bezier(.16,1,.3,1),transform .8s cubic-bezier(.16,1,.3,1)}
+.rv.in{opacity:1;transform:none}
+</style>
+</head>
+<body data-mode="light">
+<div class="page">
+
+<header class="topbar">
+  <div class="brandline">Direction 11 — The Synthesis</div>
+  <div class="tabs">
+    <button class="tab on" data-go="light"><span class="dot"></span>Off-white</button>
+    <button class="tab" data-go="dark"><span class="dot"></span>Warm black</button>
+    <button class="tab" data-go="blueprint"><span class="dot"></span>Blueprint</button>
+  </div>
+</header>
+
+<section class="hero">
+  <p class="kicker">Serif titles · sans body · mono labels · square corners · real paper</p>
+  <h1>Loose<em>leaf</em></h1>
+  <p class="lede">A design language that looks like <b>your best class notes</b>: warm paper with visible grain, ruled lines, taped corners, and a dog-eared flashcard. Serif headlines (Fraunces) carry the personality, a square sans (Sora) does the work, and <b>mono labels</b> handle the bookkeeping. Corners stay <b>squared at 3px</b> — but hard offset shadows, tilted sheets, and press-down buttons keep it playful. Right answers are <b>green</b>, wrong ones are <b>red</b>, unmistakable at a glance.</p>
+  <span class="margin-note" style="right:8vw;top:12vh">switch modes<br>up top ↗</span>
+  <span class="margin-note" style="left:52vw;top:44vh">the sheet is taped down —<br>hover to flatten it</span>
+</section>
+
+<section class="demo rv">
+  <div class="sheet">
+    <div class="sheet-in">
+      <div class="app-top">
+        <span class="app-brand">Loose<span>leaf</span></span>
+        <span class="streak">STREAK <b>· 12 DAYS</b></span>
+      </div>
+      <div class="subj">
+        <button class="s on">BIOLOGY</button>
+        <button class="s">HISTORY</button>
+        <button class="s">MATH</button>
+      </div>
+      <div class="card" id="card">
+        <div class="card-in">
+          <div class="face">
+            <span class="no">CARD 07 / 20 — CELL STRUCTURE</span>
+            <span class="q">Which organelle is called the powerhouse of the cell?</span>
+            <span class="hint">TAP TO FLIP ↺</span>
+          </div>
+          <div class="face back">
+            <span class="no">THE ANSWER</span>
+            <span class="q">the mitochondria</span>
+            <span class="hint">NOW GRADE YOURSELF HONESTLY ↓</span>
+          </div>
+        </div>
+        <span class="dogear"></span>
+      </div>
+      <div class="judge">
+        <button class="got" id="got">✓ Got it right</button>
+        <button class="miss" id="miss">✗ Missed it</button>
+      </div>
+      <div class="prog">
+        <div class="prog-top"><span>UNIT 3 PROGRESS</span><span id="pg-label">07 / 20</span></div>
+        <div class="pbar"><i id="pg-bar"></i></div>
+      </div>
+      <div class="banner" id="banner">
+        <div class="b-t" id="b-t"></div>
+        <div class="b-s" id="b-s"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="demo-side">
+    <h2>Honest feedback,<br><em style="font-style:italic;font-weight:600;color:var(--accent)">paper</em> warmth.</h2>
+    <p>The Duolingo lesson worth keeping: <b>judgment is binary and loud</b>. Green means banked, red means it comes back — no mushy in-between. Everything else stays quiet paper.</p>
+    <p>The Field Notes lesson: <b>one warm accent</b> (safety orange) for the current thing; dashed lines for structure; strike-throughs for what's done.</p>
+    <ul class="spec-chips">
+      <li>Fraunces 900 titles</li>
+      <li>Sora body</li>
+      <li>Space Mono meta</li>
+      <li>3px radius</li>
+      <li>Offset shadows</li>
+      <li>Ruled + grain</li>
+    </ul>
+    <p class="count-line">THIS SESSION — <b id="c-ok">0 RIGHT</b> / <i id="c-no">0 MISSED</i> · TRY THE CARD →</p>
+  </div>
+</section>
+
+<section class="specimen">
+  <div class="spec-head rv">
+    <h2>Specimen</h2>
+    <span class="mono">Everything below re-skins live with the mode tabs</span>
+  </div>
+
+  <div class="srow rv">
+    <div class="lbl">Typography<small>3 voices, strict jobs</small></div>
+    <div class="type-demo">
+      <div class="t1">The cell, chapter three</div>
+      <div class="t2">Body text is Sora — a geometric sans that stays friendly at small sizes and never competes with the serif. Sixteen pixels minimum, 1.65 line height, ink on paper.</div>
+      <div class="t3">// meta is Space Mono — CARD_NO=07 · UNIT=3 · next_review=friday <b>· streak: 12d</b></div>
+    </div>
+  </div>
+
+  <div class="srow rv">
+    <div class="lbl">Palette<small>current mode</small></div>
+    <div class="pal">
+      <div class="sw"><i style="background:var(--paper)"></i><span>paper</span></div>
+      <div class="sw"><i style="background:var(--sheet)"></i><span>sheet</span></div>
+      <div class="sw"><i style="background:var(--ink)"></i><span>ink</span></div>
+      <div class="sw"><i style="background:var(--accent)"></i><span>accent</span></div>
+      <div class="sw"><i style="background:var(--right)"></i><span>right</span></div>
+      <div class="sw"><i style="background:var(--wrong)"></i><span>wrong</span></div>
+    </div>
+  </div>
+
+  <div class="srow rv">
+    <div class="lbl">Components<small>square, offset, springy</small></div>
+    <div class="comp">
+      <button class="btn pri">Start session</button>
+      <button class="btn sec">Review deck</button>
+      <button class="btn ghost">+ add note</button>
+      <span class="chipx">BIOLOGY</span>
+      <span class="chipx" style="border-style:dashed;color:var(--muted)">ARCHIVED</span>
+      <div class="tog" id="tog"><i></i></div>
+      <input class="inp" placeholder="search your notes_" />
+    </div>
+  </div>
+
+  <div class="srow rv">
+    <div class="lbl">Judgment states<small>never ambiguous</small></div>
+    <div class="fb">
+      <div class="fc ok"><div class="s1">✓ Right — banked</div><div class="s2">Mitochondria</div></div>
+      <div class="fc no"><div class="s2">Chloroplast</div><div class="s1" style="margin-top:8px">✗ Missed — returns Friday</div></div>
+    </div>
+  </div>
+</section>
+
+<footer class="foot">
+  <span class="mono">Looseleaf — 3 modes · one language</span>
+  <a href="index.html">← back to the ten-direction gallery</a>
+</footer>
+
+</div>
+
+<script>
+/* mode tabs */
+document.querySelectorAll('.tab').forEach(t=>{
+  t.addEventListener('click',()=>{
+    document.body.dataset.mode = t.dataset.go;
+    document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x===t));
+  });
+});
+
+/* flashcard flip */
+const card = document.getElementById('card');
+card.addEventListener('click',()=>card.classList.toggle('flipped'));
+
+/* judgment */
+let ok=0, no=0, done=7;
+const banner=document.getElementById('banner'), bt=document.getElementById('b-t'), bs=document.getElementById('b-s');
+function judge(right){
+  if(right){ ok++; done=Math.min(20,done+1);
+    bt.textContent='✓ Correct — banked.';
+    bs.textContent='recall strengthened · next review in 3 days';
+    banner.className='banner show ok';
+  } else { no++;
+    bt.textContent='✗ Missed — no shame.';
+    bs.textContent='this card returns friday · see it once more today';
+    banner.className='banner show no';
+  }
+  document.getElementById('c-ok').textContent=ok+' RIGHT';
+  document.getElementById('c-no').textContent=no+' MISSED';
+  document.getElementById('pg-label').textContent=String(done).padStart(2,'0')+' / 20';
+  document.getElementById('pg-bar').style.width=(done/20*100)+'%';
+  clearTimeout(banner._t);
+  banner._t=setTimeout(()=>{banner.className='banner'},2600);
+}
+document.getElementById('got').addEventListener('click',()=>judge(true));
+document.getElementById('miss').addEventListener('click',()=>judge(false));
+
+/* toggle */
+const tog=document.getElementById('tog');
+tog.addEventListener('click',()=>tog.classList.toggle('on'));
+
+/* subject chips */
+document.querySelectorAll('.subj .s').forEach(s=>s.addEventListener('click',()=>{
+  document.querySelectorAll('.subj .s').forEach(x=>x.classList.remove('on')); s.classList.add('on');
+}));
+
+/* reveal on scroll */
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('in')}),{threshold:.2});
+document.querySelectorAll('.rv').forEach(el=>io.observe(el));
+</script>
+</body>
+</html>
